@@ -6,11 +6,10 @@ LAMBDA_MD5 ?= $(shell find ./lambda -iname \*.py -print0 | xargs -0 cat | md5)
 LAMBDA_ZIP = lambda-$(CODE_MD5).zip
 LAMBDA_KEY = $(LAMBDA_PREFIX)/$(LAMBDA_ZIP)
 
-ACTION ?= $(shell ../bin/cloudformation_action $(STACK_NAME))
-
 .PHONY: stack upload_lambda clean
 
 stack: upload_lambda parameters.txt
+	$(eval ACTION ?= $(shell ../bin/cloudformation_action $(STACK_NAME)))
 	aws cloudformation $(ACTION)-stack           \
 	  --stack-name "$(STACK_NAME)"               \
 	  --template-body "file://./cfn.json"        \
