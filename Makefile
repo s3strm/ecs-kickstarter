@@ -7,20 +7,15 @@ LAMBDA_ZIP = lambda-$(CODE_MD5).zip
 LAMBDA_KEY = $(LAMBDA_PREFIX)/$(LAMBDA_ZIP)
 
 ACTION ?= $(shell ../bin/cloudformation_action $(STACK_NAME))
-TEMPLATE = ./cfn.json
-
-PARAMETERS  = "ParameterKey=MovieBucketName,ParameterValue=$(MOVIE_BUCKET)"
-PARAMETERS += "ParameterKey=CodeBucket,ParameterValue=$(GENERAL_BUCKET)"
-PARAMETERS += "ParameterKey=CodeKey,ParameterValue=$(CODE_KEY)"
 
 .PHONY: stack upload_lambda clean
 
-stack: upload_lambda
-	aws cloudformation $(ACTION)-stack    \
-	  --stack-name "$(STACK_NAME)"        \
-	  --template-body "file://$(TEMPLATE)"       \
-	  --parameters $(PARAMETERS)          \
-	  --capabilities CAPABILITY_IAM       \
+stack: upload_lambda parameters.txt
+	aws cloudformation $(ACTION)-stack           \
+	  --stack-name "$(STACK_NAME)"               \
+	  --template-body "file://./cfn.json"        \
+	  --parameters "file://./parameters.txt"     \
+	  --capabilities CAPABILITY_IAM              \
 	  2>&1
 	@aws cloudformation wait stack-$(ACTION)-complete \
 	  --stack-name $(STACK_NAME)
@@ -28,13 +23,19 @@ stack: upload_lambda
 upload_lambda: lambda.zip
 	@aws s3 cp lambda.zip s3://$(LAMBDA_BUCKET)/$(LAMBDA_KEY)
 
+clean:
+	@rm -f parameters.txt ./lambda/settings.py ./lambda.zip
+
+parameters.txt:
+	$(eval PARAM_STR := 'ParameterKey=%s,ParameterValue=%s ')
+	printf $(PARAM_STR) "LambdaBucket" $(LAMBDA_BUCKET) >> parameters.txt
+	printf $(PARAM_STR) "LambdaKey" $(LAMBDA_KEY) >> parameters.txt
+
 lambda/settings.py:
 	@rm -f ./lambda/settings.py
 	@echo 'region = "$(AWS_DEFAULT_REGION)"' >> ./lambda/settings.py
 
 lambda.zip: clean lambda/settings.py
-	cd ./lambda && \
-	  zip -9rq ../lambda.zip $(shell find .)
+	$(eval FILE_LIST := $(shell cd ./lambda/ && find . -type f))
+	@cd ./lambda && zip -9rq ../lambda.zip $(FILE_LIST)
 
-clean:
-	@rm -f ./lambda/settings.py ./lambda.zip
