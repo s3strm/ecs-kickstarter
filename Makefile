@@ -7,6 +7,7 @@ LAMBDA_ZIP = lambda-$(CODE_MD5).zip
 LAMBDA_KEY = $(LAMBDA_PREFIX)/$(LAMBDA_ZIP)
 LAMBDA_ROLE_ARN = arn::blah
 ECS_TASK = my_task
+ECS_ENVIRONMENT_VARIABLES = my_task
 
 .PHONY: stack upload_lambda clean
 

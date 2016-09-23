@@ -23,6 +23,8 @@ Then write this Makefile to `./Makefile`
 export STACK_NAME = my-stack-name
 export AWS_DEFAULT_REGION = us-west-1
 export LAMBDA_BUCKET = my-lambda-code-bucket
+export ECS_TASK = my_task
+export ECS_ENVIROMENT_VARIABLES = "var1=blah var2=blah2"
 
 deploy:
     make -e -C ecs-kickstarter stack
