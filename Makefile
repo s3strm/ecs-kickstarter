@@ -5,6 +5,8 @@ LAMBDA_PREFIX = path_in_s3_bucket_to_lambda.zip
 LAMBDA_MD5 ?= $(shell find ./lambda -iname \*.py -print0 | xargs -0 cat | md5)
 LAMBDA_ZIP = lambda-$(CODE_MD5).zip
 LAMBDA_KEY = $(LAMBDA_PREFIX)/$(LAMBDA_ZIP)
+LAMBDA_ROLE_ARN = arn::blah
+ECS_TASK = my_task
 
 .PHONY: stack upload_lambda clean
 
@@ -27,8 +29,10 @@ clean:
 
 parameters.txt:
 	$(eval PARAM_STR := 'ParameterKey=%s,ParameterValue=%s ')
+	printf $(PARAM_STR) "Task" $(ECS_TASK) >> parameters.txt
 	printf $(PARAM_STR) "LambdaBucket" $(LAMBDA_BUCKET) >> parameters.txt
 	printf $(PARAM_STR) "LambdaKey" $(LAMBDA_KEY) >> parameters.txt
+	printf $(PARAM_STR) "LambdaRoleArn" $(LAMBDA_ROLE) >> parameters.txt
 
 lambda/settings.py:
 	@rm -f ./lambda/settings.py
