@@ -1,6 +1,6 @@
 # s3strm/ecs-kickstarter
 
-Trigger an ECS task to run from an SQS event.
+Trigger an ECS task to run from an SNS event.
 
 
 ## Pipeline
