@@ -1,11 +1,13 @@
 AWS_DEFAULT_REGION = us-west-1
-STACK_NAME = ecs-kickstarter
-LAMBDA_BUCKET = an_s3_bucket
-LAMBDA_PREFIX = path_in_s3_bucket_to_lambda.zip
-LAMBDA_MD5 ?= $(shell find ./lambda -iname \*.py -print0 | xargs -0 cat | md5)
+
+STACK_NAME = $(KICKSTARTER_STACK_NAME)
+LAMBDA_BUCKET = $(KICKSTARTER_LAMBDA_BUCKET)
+LAMBDA_PREFIX = $(KICKSTARTER_LAMBDA_PREFIX)
+LAMBDA_ROLE_ARN = $(KICKSTARTER_LAMBDA_ROLE_ARN)
+
+LAMBDA_MD5 = $(shell find ./lambda -iname \*.py -print0 | xargs -0 cat | md5)
 LAMBDA_ZIP = lambda-$(CODE_MD5).zip
 LAMBDA_KEY = $(LAMBDA_PREFIX)/$(LAMBDA_ZIP)
-LAMBDA_ROLE_ARN = arn::blah
 
 ECS_CLUSTER = my_cluster
 ECS_CONTAINER_NAME = my_container
@@ -20,7 +22,7 @@ stack: upload_lambda parameters.txt
 	aws cloudformation $(ACTION)-stack           \
 	  --stack-name "$(STACK_NAME)"               \
 	  --template-body "file://./cfn.json"        \
-	  --parameters "file://./parameters.txt"     \
+	  --parameters $(shell cat ./parameters.txt)     \
 	  --capabilities CAPABILITY_IAM              \
 	  2>&1
 	@aws cloudformation wait stack-$(ACTION)-complete \
@@ -34,10 +36,10 @@ clean:
 
 parameters.txt:
 	$(eval PARAM_STR := 'ParameterKey=%s,ParameterValue=%s ')
-	printf $(PARAM_STR) "Task" $(ECS_TASK_DEFINITION) >> parameters.txt
-	printf $(PARAM_STR) "LambdaBucket" $(LAMBDA_BUCKET) >> parameters.txt
-	printf $(PARAM_STR) "LambdaKey" $(LAMBDA_KEY) >> parameters.txt
-	printf $(PARAM_STR) "LambdaRoleArn" $(LAMBDA_ROLE) >> parameters.txt
+	@printf $(PARAM_STR) "Task" $(ECS_TASK_DEFINITION) >> parameters.txt
+	@printf $(PARAM_STR) "LambdaBucket" $(LAMBDA_BUCKET) >> parameters.txt
+	@printf $(PARAM_STR) "LambdaKey" $(LAMBDA_KEY) >> parameters.txt
+	@printf $(PARAM_STR) "LambdaRoleArn" $(LAMBDA_ROLE_ARN) >> parameters.txt
 
 lambda/settings.py:
 	@rm -f ./lambda/settings.py
