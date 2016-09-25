@@ -6,21 +6,28 @@ import settings
 
 def run_task(s3_key):
     client = boto3.client('ecs')
-
-    import pdb; pdb.set_trace()
-
     response = client.run_task(
         cluster=settings.cluster,
         taskDefinition=settings.task_definition,
-        overrides=settings.overrides,
+        overrides={ "containerOverrides": [
+            {
+                "name": settings.container_name,
+                "environment": [{
+                    "name": "KEY",
+                    "value": s3_key,
+                }]
+            }
+        ]}
     )
+    print(response)
 
 def lambda_handler(event, context):
     for record in event["Records"]:
-        for imdb_id in ast.literal_eval(record["Sns"]["Message"])["Records"]:
-            s3_key = "s3://something/{}/video.mp4".format(imdb_id)
-            run_task(imdb_id)
-            print(imdb_id)
+        for r in ast.literal_eval(record["Sns"]["Message"])["Records"]:
+            key = r["s3"]["object"]["key"]
+            bucket = r["s3"]["bucket"]["name"]
+            s3_key = "s3://{}/{}".format(bucket, key)
+            run_task(s3_key)
 
     return True
 
