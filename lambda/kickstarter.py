@@ -30,7 +30,3 @@ def lambda_handler(event, context):
             run_task(s3_key)
 
     return True
-
-if __name__ == "__main__":
-    event = { "Records": [ {"Sns": { "Message": "{\"Records\": [\"tt0427312\"]}"} } ] }
-    print(json.dumps(lambda_handler(event, None)))
